@@ -27,14 +27,17 @@
 @property (nonatomic, strong) UISlider *progressSlider;
 @property (nonatomic, strong) UISlider *volumeSlider;
 @property (nonatomic, strong) UIProgressView *loadingProgress;
+// middleView
+@property (nonatomic,strong) UIActivityIndicatorView *loadingView;
 // 定时器
-@property (nonatomic, strong) NSTimer *autoDismissTimer;
+@property (nonatomic, weak) NSTimer *timer;
+
 @end
 
 @implementation QLPlayerView
 - (void)dealloc {
     QLLog(@"释放播放器");
-    [self removeMovieNotificationObservers];
+    [self releaseTimer];   
 }
 
 #pragma mark ******** 初始化方法
@@ -93,7 +96,7 @@
         [self.player pause];
         
     }else{
-        
+        [_loadingView startAnimating];
         [self.player play];
     }
     
@@ -162,42 +165,76 @@ CGPoint startP;
 
 #pragma mark ******** ObserversActions
 - (void)loadStateDidChange:(NSNotification *)noti {
-    
+    IJKMPMovieLoadState loadState = _player.loadState;
+    if ((loadState & IJKMPMovieLoadStatePlaythroughOK) != 0) {//可以播放
+        if (!self.playOrPauseBtn.isSelected && !_player.isPlaying) {
+            [_player play];
+        }
+    }else if ((loadState & IJKMPMovieLoadStateStalled) != 0) {//网速不好
+        [_loadingView startAnimating];
+    } else {
+        NSLog(@"loadStateDidChange: ???: %d\n", (int)loadState);
+    }
+
 }
 - (void)moviePlayBackFinish:(NSNotification *)noti {
     
 }
 - (void)mediaIsPreparedToPlayDidChange:(NSNotification *)noti {
-    
+    _rightTimeLabel.text =[NSString stringWithFormat:@"%@",[self TimeformatFromSeconds:self.player.duration]];
 }
+
 - (void)moviePlayBackStateDidChange:(NSNotification *)noti {
     if (self.player.playbackState==IJKMPMoviePlaybackStatePlaying) {
         //视频开始播放的时候开启计时器
+        [self releaseTimer];//由于这里会运行不止一次, 所以添加之前要释放原来的
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(updateVideoUI) userInfo:nil repeats:YES];
         
         [self performSelector:@selector(hide) withObject:nil afterDelay:4];
         _coverImageView.hidden = YES;
+        [_loadingView stopAnimating];
         
     }
+}
+#pragma mark ******** 更新播放进度
+- (void)updateVideoUI {
+    _leftTimeLabel.text = [NSString stringWithFormat:@"%@/",[self TimeformatFromSeconds:self.player.currentPlaybackTime]];
+    
+    CGFloat current = self.player.currentPlaybackTime;
+    CGFloat total = self.player.duration;
+    CGFloat able = self.player.playableDuration;
+    [_progressSlider setValue:current/total animated:YES];
+    [_loadingProgress setProgress:able/total animated:YES];
 }
 
 #pragma mark ******** UI
 //MARK:释放播放器
 - (void)ql_releasePlayer {
-    [self.player shutdown];
+    [self releasePlayer];
     if (self.playerView.superview) {
         [self.playerView removeFromSuperview];
         self.player = nil;
         self.playerView = nil;
-        
     }
 }
 - (void)releasePlayer {
+    [self releaseTimer];
+     [self removeMovieNotificationObservers];
     [self.player shutdown];
+    self.player = nil;
+}
+
+- (void)releaseTimer {
+    if (!self.timer) {
+        return;
+    }
+    [self.timer invalidate];
+    self.timer = nil;
 }
 #pragma mark-初始化playerView
 - (void)setupPlayerView {
     
-    [self releasePlayer];
+    [self ql_releasePlayer];
     //MARK:ijkPlayer初始配置
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     [options setOptionIntValue:IJK_AVDISCARD_DEFAULT forKey:@"skip_frame" ofCategory:kIJKFFOptionCategoryCodec];
@@ -237,6 +274,11 @@ CGPoint startP;
         make.left.right.top.bottom.equalTo(self.playerView);
     }];
 
+    self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+    [self.playerView addSubview:self.loadingView];
+    [self.loadingView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.center.equalTo(self.playerView);
+    }];
     
     //点击手势
     UITapGestureRecognizer * tap  = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(playerViewTap:)];
@@ -356,7 +398,7 @@ CGPoint startP;
         make.centerY.equalTo(self.bottomView);
         make.height.mas_equalTo(20);
     }];
-    self.rightTimeLabel.text = @"00:00";//设置默认值
+    self.rightTimeLabel.text = @"00:00:00";//设置默认值
     
     //leftTimeLabel显示左边的时间进度
     self.leftTimeLabel = [[UILabel alloc]init];
@@ -370,7 +412,7 @@ CGPoint startP;
         make.height.mas_equalTo(20);
         make.centerY.equalTo(self.bottomView);
     }];
-    self.leftTimeLabel.text = [NSString stringWithFormat:@"%@/", @"00:00"];//设置默认值
+    self.leftTimeLabel.text = [NSString stringWithFormat:@"%@/", @"00:00:00"];//设置默认值
     
     //滑杆套件
     self.progressSlider = [[UISlider alloc]init];
@@ -403,10 +445,24 @@ CGPoint startP;
     [self.bottomView addSubview:self.loadingProgress];
     [self.loadingProgress setProgress:0.0 animated:NO];
     [self.loadingProgress mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.bottomView).with.offset(45);
+        make.left.equalTo(self.bottomView).with.offset(50);
         make.right.equalTo(self.progressSlider);
         make.centerY.equalTo(self.bottomView.mas_centerY);
     }];
+}
+
+#pragma mark ******** 工具代码
+- (NSString*)TimeformatFromSeconds:(NSInteger)seconds
+{
+    //format of hour
+    NSString *str_hour = [NSString stringWithFormat:@"%02ld",seconds/3600];
+    //format of minute
+    NSString *str_minute = [NSString stringWithFormat:@"%02ld",(seconds%3600)/60];
+    //format of second
+    NSString *str_second = [NSString stringWithFormat:@"%02ld",seconds%60];
+    //format of time
+    NSString *format_time = [NSString stringWithFormat:@"%@:%@:%@",str_hour,str_minute,str_second];
+    return format_time;
 }
 
 #pragma mark-观察视频播放状态

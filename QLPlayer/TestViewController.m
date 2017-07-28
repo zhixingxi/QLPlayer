@@ -19,6 +19,7 @@
     QLLog(@"释放控制器");
 //    [self.player.player shutdown];
     [self.player releasePlayer];
+    self.player = nil;
     
 }
 
