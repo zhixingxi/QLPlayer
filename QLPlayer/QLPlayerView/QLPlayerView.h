@@ -24,7 +24,9 @@
 
 @interface QLPlayerView : UIView
 @property (nonatomic, weak) id<QLPlayerViewDelegate> delegate;
-@property (nonatomic, strong) UIImage *coverPlaceholderImage;
+@property (nonatomic, copy) NSString *url;
+@property (nonatomic, strong)IJKFFMoviePlayerController * player;
 
 -(instancetype)initWithFrame:(CGRect)frame delegate:(id)delegate url:(NSString *)url;
+- (void)releasePlayer;
 @end

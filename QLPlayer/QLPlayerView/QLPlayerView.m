@@ -10,8 +10,7 @@
 #import "Masonry.h"
 
 @interface QLPlayerView ()<UIGestureRecognizerDelegate>
-@property (nonatomic, strong)IJKFFMoviePlayerController * player;
-@property (nonatomic, copy) NSString *url;
+
 @property (nonatomic, strong) UIView *playerView;
 @property (nonatomic, strong) UIView *coverView;
 @property (nonatomic, strong) UIImageView *coverImageView;
@@ -23,14 +22,20 @@
 @property (nonatomic, strong) UIView *bottomView;
 @property (nonatomic, strong) UIButton *playOrPauseBtn;
 @property (nonatomic, strong) UIButton *fullScreenBtn;
-@property (nonatomic,strong) UILabel *leftTimeLabel;
-@property (nonatomic,strong) UILabel *rightTimeLabel;
-@property (nonatomic,strong) UISlider *progressSlider;
-@property (nonatomic,strong) UISlider *volumeSlider;
-@property (nonatomic,strong) UIProgressView *loadingProgress;
+@property (nonatomic, strong) UILabel *leftTimeLabel;
+@property (nonatomic, strong) UILabel *rightTimeLabel;
+@property (nonatomic, strong) UISlider *progressSlider;
+@property (nonatomic, strong) UISlider *volumeSlider;
+@property (nonatomic, strong) UIProgressView *loadingProgress;
+// 定时器
+@property (nonatomic, strong) NSTimer *autoDismissTimer;
 @end
 
 @implementation QLPlayerView
+- (void)dealloc {
+    QLLog(@"释放播放器");
+    [self removeMovieNotificationObservers];
+}
 
 #pragma mark ******** 初始化方法
 - (instancetype)initWithFrame:(CGRect)frame delegate:(id<QLPlayerViewDelegate>)delegate url:(NSString *)url {
@@ -38,7 +43,6 @@
         [self creatCoverView];
         self.delegate = delegate;
         self.url = url;
-        
     }
     return self;
 }
@@ -48,8 +52,133 @@
     [self setupPlayerView];
 }
 
+#pragma mark ******** 按钮事件
+- (void)backBtnClick:(UIButton *)sender {
+    QLLog(@"点击了返回按钮");
+}
+- (void)PlayOrPause:(UIButton *)sender {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
+    
+    sender.selected = !sender.selected;
+    
+    if (sender.selected) {
+        
+        [self.player pause];
+        
+    }else{
+        
+        [self.player play];
+    }
+    
+    [self performSelector:@selector(hide) withObject:nil afterDelay:4];
+}
+-  (void)fullScreenAction:(UIButton *)sender {
+    QLLog(@"点击了全屏");
+}
+#pragma mark ******** 滑杆事件
+- (void)stratDragSlide:(UISlider *)slider{
+    QLLog(@"开始拖拽");
+}
+- (void)updateProgress:(UISlider *)slider{
+    QLLog(@"更新进度");
+
+}
+- (void)actionTapGesture:(UITapGestureRecognizer *)sender {
+    QLLog(@"点击了进度条");
+}
+#pragma mark-点击了playerView
+BOOL _hideCover;
+-(void)playerViewTap:(UITapGestureRecognizer *)recognizer{
+    QLLog(@"点击了视频");
+    //每次点击取消还在进程中的隐藏方法
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
+    [UIView animateWithDuration:0.25 animations:^{
+        if (!_hideCover) {
+            self.coverView.alpha = 0;
+        }else{
+            self.coverView.alpha = 1;
+        }
+    } completion:^(BOOL finished) {
+        if (!_hideCover) {
+            self.coverView.hidden = YES;
+        }else{
+            self.coverView.hidden = NO;
+            _hideCover = NO;
+            //如果最后没隐藏,在调用隐藏的代码
+            [self performSelector:@selector(hide) withObject:nil afterDelay:4];
+        }
+    }];
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    if ([touch.view isKindOfClass:[UIButton class]]){
+        return NO;
+    }
+    return YES;
+}
+#pragma mark-隐藏cover
+
+-(void)hide{
+    [UIView animateWithDuration:0.25 animations:^{
+        self.coverView.alpha =0;
+    }completion:^(BOOL finished) {
+        self.coverView.hidden = YES;
+        _hideCover = YES;
+    }];
+}
+
+#pragma mark-touchBengan
+CGPoint startP;
+-(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
+    
+    NSLog(@"touchbegan=======%d",_hideCover);
+    
+    startP = [[touches anyObject] locationInView:self.playerView];
+    
+    if (!_hideCover) {
+        [self hide];
+    }
+}
+
+
+
+#pragma mark ******** ObserversActions
+- (void)loadStateDidChange:(NSNotification *)noti {
+    
+}
+- (void)moviePlayBackFinish:(NSNotification *)noti {
+    
+}
+- (void)mediaIsPreparedToPlayDidChange:(NSNotification *)noti {
+    
+}
+- (void)moviePlayBackStateDidChange:(NSNotification *)noti {
+    if (self.player.playbackState==IJKMPMoviePlaybackStatePlaying) {
+        //视频开始播放的时候开启计时器
+        
+        [self performSelector:@selector(hide) withObject:nil afterDelay:4];
+        _coverImageView.hidden = YES;
+        
+    }
+}
+
+#pragma mark ******** UI
+//MARK:释放播放器
+- (void)ql_releasePlayer {
+    [self.player shutdown];
+    if (self.playerView.superview) {
+        [self.playerView removeFromSuperview];
+        self.player = nil;
+        self.playerView = nil;
+        
+    }
+}
+- (void)releasePlayer {
+    [self.player shutdown];
+}
 #pragma mark-初始化playerView
 - (void)setupPlayerView {
+    
+    [self releasePlayer];
     //MARK:ijkPlayer初始配置
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     [options setOptionIntValue:IJK_AVDISCARD_DEFAULT forKey:@"skip_frame" ofCategory:kIJKFFOptionCategoryCodec];
@@ -58,11 +187,16 @@
     [options setOptionIntValue:60 forKey:@"max-fps" ofCategory:kIJKFFOptionCategoryPlayer];
     [options setPlayerOptionIntValue:256 forKey:@"vol"];
     
+    [IJKFFMoviePlayerController setLogReport:NO];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_UNKNOWN];
+    
     //MARK:创建播放器
     NSURL *url = [NSURL URLWithString:self.url];
     self.player = [[IJKFFMoviePlayerController alloc]initWithContentURL:url withOptions:options];
     [self.player setScalingMode:IJKMPMovieScalingModeFill];
     [self.player prepareToPlay];
+    self.player.shouldAutoplay = NO;
+    [self installMovieNotificationObservers];
     
     //获取播放视图
     self.playerView = [self.player view];
@@ -76,8 +210,9 @@
     _coverImageView.userInteractionEnabled = YES;
     _coverImageView.image = [UIImage imageNamed:@"placeHolderbg"];
     [_coverImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-       make.left.right.top.bottom.equalTo(self.playerView);
+        make.left.right.top.bottom.equalTo(self.playerView);
     }];
+
     
     //点击手势
     UITapGestureRecognizer * tap  = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(playerViewTap:)];
@@ -175,14 +310,14 @@
     [self.fullScreenBtn setImage:[UIImage imageNamed:@"fullscreen"] forState:UIControlStateNormal];
     [self.fullScreenBtn setImage:[UIImage imageNamed:@"nonfullscreen"] forState:UIControlStateSelected];
     [self.bottomView addSubview:self.fullScreenBtn];
-
+    
     [self.fullScreenBtn mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(_bottomView).with.offset(- 15);
         make.height.mas_equalTo(20);
         make.width.mas_equalTo(20);
         make.centerY.equalTo(_bottomView);
     }];
-
+    
     
     //rightTimeLabel显示右边的总时间
     self.rightTimeLabel = [[UILabel alloc]init];
@@ -235,12 +370,12 @@
     self.progressSlider.backgroundColor = [UIColor clearColor];
     //autoLayout slider
     [self.progressSlider mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.bottomView).with.offset(45);
+        make.left.equalTo(self.bottomView).with.offset(50);
         make.right.equalTo(self.leftTimeLabel.mas_left).with.offset(-5);
         make.centerY.equalTo(self.bottomView.mas_centerY).offset(-1);
         make.height.mas_equalTo(30);
     }];
-
+    
     // 进度条
     self.loadingProgress = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
     self.loadingProgress.progressTintColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.5];
@@ -253,99 +388,6 @@
         make.centerY.equalTo(self.bottomView.mas_centerY);
     }];
 }
-
-
-#pragma mark ******** 按钮事件
-- (void)backBtnClick:(UIButton *)sender {
-    QLLog(@"点击了返回按钮");
-}
-- (void)PlayOrPause:(UIButton *)sender {
-    QLLog(@"开始与暂停播放");
-}
--  (void)fullScreenAction:(UIButton *)sender {
-    QLLog(@"点击了全屏");
-}
-#pragma mark ******** 滑杆事件
-- (void)stratDragSlide:(UISlider *)slider{
-    QLLog(@"开始拖拽");
-}
-- (void)updateProgress:(UISlider *)slider{
-    QLLog(@"更新进度");
-
-}
-- (void)actionTapGesture:(UITapGestureRecognizer *)sender {
-    QLLog(@"点击了进度条");
-}
-#pragma mark-点击了playerView
-BOOL _hideCover;
--(void)playerViewTap:(UITapGestureRecognizer *)recognizer{
-    QLLog(@"点击了视频");
-    //每次点击取消还在进程中的隐藏方法
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
-    [UIView animateWithDuration:0.25 animations:^{
-        if (!_hideCover) {
-            self.coverView.alpha = 0;
-        }else{
-            self.coverView.alpha = 1;
-        }
-    } completion:^(BOOL finished) {
-        if (!_hideCover) {
-            self.coverView.hidden = YES;
-        }else{
-            self.coverView.hidden = NO;
-            _hideCover = NO;
-            //如果最后没隐藏,在调用隐藏的代码
-            [self performSelector:@selector(hide) withObject:nil afterDelay:4];
-        }
-    }];
-}
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
-    if ([touch.view isKindOfClass:[UIButton class]]){
-        return NO;
-    }
-    return YES;
-}
-#pragma mark-隐藏cover
-
--(void)hide{
-    [UIView animateWithDuration:0.25 animations:^{
-        self.coverView.alpha =0;
-    }completion:^(BOOL finished) {
-        self.coverView.hidden = YES;
-        _hideCover = YES;
-    }];
-}
-
-#pragma mark-touchBengan
-CGPoint startP;
--(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
-    
-    NSLog(@"touchbegan=======%d",_hideCover);
-    
-    startP = [[touches anyObject] locationInView:self.playerView];
-    
-    if (!_hideCover) {
-        [self hide];
-    }
-}
-
-
-
-#pragma mark ******** ObserversActions
-- (void)loadStateDidChange:(NSNotification *)noti {
-    
-}
-- (void)moviePlayBackFinish:(NSNotification *)noti {
-    
-}
-- (void)mediaIsPreparedToPlayDidChange:(NSNotification *)noti {
-    
-}
-- (void)moviePlayBackStateDidChange:(NSNotification *)noti {
-    
-}
-
-#pragma mark ******** 工具方法
 
 #pragma mark-观察视频播放状态
 - (void)installMovieNotificationObservers {

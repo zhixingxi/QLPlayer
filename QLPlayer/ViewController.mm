@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "TestViewController.h"
 
 #import "QLPlayerView/QLPlayerView.h"
 
@@ -18,11 +19,14 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.player = [[QLPlayerView alloc]initWithFrame:CGRectMake(0, 64, QLSCREEN_W, 200) delegate:self url:@""];
-    [self.view addSubview:self.player];
+    
 }
 
 
+- (IBAction)pushToNext:(UIButton *)sender {
+    TestViewController *vc = [[TestViewController alloc]init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
 
 

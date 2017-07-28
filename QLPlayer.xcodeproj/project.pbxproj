@@ -39,6 +39,7 @@
 		E4E7D03D1F2B23950008FE8C /* NSLayoutConstraint+MASDebugAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D0301F2B23950008FE8C /* NSLayoutConstraint+MASDebugAdditions.m */; };
 		E4E7D03E1F2B23950008FE8C /* View+MASAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D0321F2B23950008FE8C /* View+MASAdditions.m */; };
 		E4E7D03F1F2B23950008FE8C /* ViewController+MASAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D0351F2B23950008FE8C /* ViewController+MASAdditions.m */; };
+		E4E7D0421F2B35360008FE8C /* TestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D0411F2B35360008FE8C /* TestViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -94,6 +95,8 @@
 		E4E7D0331F2B23950008FE8C /* View+MASShorthandAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "View+MASShorthandAdditions.h"; sourceTree = "<group>"; };
 		E4E7D0341F2B23950008FE8C /* ViewController+MASAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ViewController+MASAdditions.h"; sourceTree = "<group>"; };
 		E4E7D0351F2B23950008FE8C /* ViewController+MASAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ViewController+MASAdditions.m"; sourceTree = "<group>"; };
+		E4E7D0401F2B35360008FE8C /* TestViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestViewController.h; sourceTree = "<group>"; };
+		E4E7D0411F2B35360008FE8C /* TestViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +149,8 @@
 				E4E7CFAD1F2ADF9C0008FE8C /* AppDelegate.m */,
 				E4E7CFAF1F2ADF9C0008FE8C /* ViewController.h */,
 				E4E7CFB01F2ADF9C0008FE8C /* ViewController.mm */,
+				E4E7D0401F2B35360008FE8C /* TestViewController.h */,
+				E4E7D0411F2B35360008FE8C /* TestViewController.m */,
 				E4E7CFB21F2ADF9C0008FE8C /* Main.storyboard */,
 				E4E7CFB51F2ADF9C0008FE8C /* Assets.xcassets */,
 				E4E7CFB71F2ADF9C0008FE8C /* LaunchScreen.storyboard */,
@@ -317,6 +322,7 @@
 				E4E7D03C1F2B23950008FE8C /* NSArray+MASAdditions.m in Sources */,
 				E4E7D03B1F2B23950008FE8C /* MASViewConstraint.m in Sources */,
 				E4E7D03A1F2B23950008FE8C /* MASViewAttribute.m in Sources */,
+				E4E7D0421F2B35360008FE8C /* TestViewController.m in Sources */,
 				E4E7D03E1F2B23950008FE8C /* View+MASAdditions.m in Sources */,
 				E4E7D0151F2B0E7A0008FE8C /* QLPlayerView.m in Sources */,
 				E4E7CFAB1F2ADF9C0008FE8C /* main.m in Sources */,
