@@ -187,15 +187,20 @@ CGPoint startP;
     [options setOptionIntValue:60 forKey:@"max-fps" ofCategory:kIJKFFOptionCategoryPlayer];
     [options setPlayerOptionIntValue:256 forKey:@"vol"];
     
+    //设置日志级别
     [IJKFFMoviePlayerController setLogReport:NO];
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_UNKNOWN];
+#ifdef DEBUG
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+#else
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+#endif
     
     //MARK:创建播放器
     NSURL *url = [NSURL URLWithString:self.url];
     self.player = [[IJKFFMoviePlayerController alloc]initWithContentURL:url withOptions:options];
     [self.player setScalingMode:IJKMPMovieScalingModeFill];
+    self.player.shouldAutoplay = NO;//放在前面才有效
     [self.player prepareToPlay];
-    self.player.shouldAutoplay = NO;
     [self installMovieNotificationObservers];
     
     //获取播放视图
