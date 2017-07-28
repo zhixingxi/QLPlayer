@@ -15,10 +15,13 @@
 #define QLLog(...) NSLog(__VA_ARGS__)
 #endif
 
+@class QLPlayerView;
 @protocol QLPlayerViewDelegate <NSObject>
 @optional
-
-
+//点击全屏按钮
+-(void)wmplayer:(QLPlayerView *)qlplayer clickedFullScreenButton:(UIButton *)fullScreenBtn;
+//点击关闭按钮代理方法
+-(void)wmplayer:(QLPlayerView *)qlplayer clickedCloseButton:(UIButton *)closeBtn;
 
 @end
 

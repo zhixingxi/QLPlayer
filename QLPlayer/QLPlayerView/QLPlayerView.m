@@ -52,9 +52,36 @@
     [self setupPlayerView];
 }
 
+
+#pragma mark ******** 滑杆事件
+- (void)updateProgress:(UISlider *)slider{
+    //取消收回工具栏的动作
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
+    
+    _player.currentPlaybackTime = slider.value*_player.duration;
+    
+    [self performSelector:@selector(hide) withObject:nil afterDelay:4];
+}
+
+- (void)actionTapGesture:(UITapGestureRecognizer *)sender {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
+    
+    UISlider * slider = (UISlider *)sender.view;
+    
+    CGPoint point = [sender locationInView:_progressSlider];
+    
+    [_progressSlider setValue:point.x/_progressSlider.bounds.size.width*1 animated:YES];
+    
+    _player.currentPlaybackTime = slider.value*_player.duration;
+    
+    [self performSelector:@selector(hide) withObject:nil afterDelay:4];
+
+}
 #pragma mark ******** 按钮事件
 - (void)backBtnClick:(UIButton *)sender {
-    QLLog(@"点击了返回按钮");
+    if (self.delegate&&[self.delegate respondsToSelector:@selector(wmplayer:clickedCloseButton:)]) {
+        [self.delegate wmplayer:self clickedCloseButton:sender];
+    }
 }
 - (void)PlayOrPause:(UIButton *)sender {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
@@ -73,18 +100,10 @@
     [self performSelector:@selector(hide) withObject:nil afterDelay:4];
 }
 -  (void)fullScreenAction:(UIButton *)sender {
-    QLLog(@"点击了全屏");
-}
-#pragma mark ******** 滑杆事件
-- (void)stratDragSlide:(UISlider *)slider{
-    QLLog(@"开始拖拽");
-}
-- (void)updateProgress:(UISlider *)slider{
-    QLLog(@"更新进度");
-
-}
-- (void)actionTapGesture:(UITapGestureRecognizer *)sender {
-    QLLog(@"点击了进度条");
+    sender.selected = !sender.selected;
+    if (self.delegate&&[self.delegate respondsToSelector:@selector(wmplayer:clickedFullScreenButton:)]) {
+        [self.delegate wmplayer:self clickedFullScreenButton:sender];
+    }
 }
 #pragma mark-点击了playerView
 BOOL _hideCover;
@@ -357,16 +376,12 @@ CGPoint startP;
     self.progressSlider = [[UISlider alloc]init];
     self.progressSlider.minimumValue = 0.0;
     self.progressSlider.maximumValue = 1.0;
-    
     [self.progressSlider setThumbImage:[UIImage imageNamed:@"dot"]  forState:UIControlStateNormal];
     self.progressSlider.minimumTrackTintColor = [UIColor greenColor];
     self.progressSlider.maximumTrackTintColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:0.5];
     self.progressSlider.value = 0.0;//指定初始值
     //进度条的拖拽事件
-    [self.progressSlider addTarget:self action:@selector(stratDragSlide:)  forControlEvents:UIControlEventValueChanged];
-    //进度条的点击事件
-    [self.progressSlider addTarget:self action:@selector(updateProgress:) forControlEvents:UIControlEventTouchUpInside];
-    
+    [self.progressSlider addTarget:self action:@selector(updateProgress:)  forControlEvents:UIControlEventValueChanged];
     //给进度条添加单击手势
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(actionTapGesture:)];
     tap.delegate = self;
