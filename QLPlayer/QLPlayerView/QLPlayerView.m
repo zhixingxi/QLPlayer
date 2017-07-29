@@ -10,7 +10,10 @@
 #import "Masonry.h"
 
 @interface QLPlayerView ()<UIGestureRecognizerDelegate>
-
+{
+    BOOL _hasPrepareToPlay;
+}
+@property (nonatomic, strong)IJKFFMoviePlayerController * player;
 @property (nonatomic, strong) UIView *playerView;
 @property (nonatomic, strong) UIView *coverView;
 @property (nonatomic, strong) UIImageView *coverImageView;
@@ -28,7 +31,8 @@
 @property (nonatomic, strong) UISlider *volumeSlider;
 @property (nonatomic, strong) UIProgressView *loadingProgress;
 // middleView
-@property (nonatomic,strong) UIActivityIndicatorView *loadingView;
+@property (nonatomic, strong) UIActivityIndicatorView *loadingView;
+@property (nonatomic, strong) UILabel *errorLabel;
 // 定时器
 @property (nonatomic, weak) NSTimer *timer;
 
@@ -51,22 +55,53 @@
 }
 
 - (void)setUrl:(NSString *)url {
+    [self resetPlayer];
     _url = url;
     [self setupPlayerView];
+}
+
+- (void)resetPlayer {
+    [_player stop];
+    [self releaseTimer];
+    _playOrPauseBtn.selected = YES;
+    _progressSlider.value = 0.0;
+    _loadingProgress.progress = 0.0;
+    _leftTimeLabel.text = @"00:00:00/";
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
+    _coverView.alpha = 1.0;
+    _coverView.hidden = NO;
+    _hasPrepareToPlay = NO;
+    
+}
+
+//MARK:开始播放
+- (void)startPlay {
+    [_loadingView startAnimating];
+    if (_hasPrepareToPlay) {
+        [self.player play];
+    } else {
+        [self.player prepareToPlay];
+    }
+    
 }
 
 
 #pragma mark ******** 滑杆事件
 - (void)updateProgress:(UISlider *)slider{
+    if (!self.player.isPlaying) {
+        slider.value = 0.0;
+        return;
+    }
     //取消收回工具栏的动作
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
-    
     _player.currentPlaybackTime = slider.value*_player.duration;
-    
     [self performSelector:@selector(hide) withObject:nil afterDelay:4];
 }
 
 - (void)actionTapGesture:(UITapGestureRecognizer *)sender {
+    if (!self.player.isPlaying) {
+        return;
+    }
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
     
     UISlider * slider = (UISlider *)sender.view;
@@ -82,8 +117,8 @@
 }
 #pragma mark ******** 按钮事件
 - (void)backBtnClick:(UIButton *)sender {
-    if (self.delegate&&[self.delegate respondsToSelector:@selector(wmplayer:clickedCloseButton:)]) {
-        [self.delegate wmplayer:self clickedCloseButton:sender];
+    if (self.delegate&&[self.delegate respondsToSelector:@selector(qlplayer:clickedCloseButton:)]) {
+        [self.delegate qlplayer:self clickedCloseButton:sender];
     }
 }
 - (void)PlayOrPause:(UIButton *)sender {
@@ -92,33 +127,44 @@
     sender.selected = !sender.selected;
     
     if (sender.selected) {
-        
+        [self.loadingView stopAnimating];
         [self.player pause];
         
     }else{
-        [_loadingView startAnimating];
-        [self.player play];
+        [self startPlay];
     }
     
     [self performSelector:@selector(hide) withObject:nil afterDelay:4];
 }
 -  (void)fullScreenAction:(UIButton *)sender {
     sender.selected = !sender.selected;
-    if (self.delegate&&[self.delegate respondsToSelector:@selector(wmplayer:clickedFullScreenButton:)]) {
-        [self.delegate wmplayer:self clickedFullScreenButton:sender];
+    if (self.delegate&&[self.delegate respondsToSelector:@selector(qlplayer:clickedFullScreenButton:)]) {
+        [self.delegate qlplayer:self clickedFullScreenButton:sender];
     }
 }
+
+- (void)setIsFullscreen:(BOOL)isFullscreen {
+    _isFullscreen = isFullscreen;
+    self.backBtn.hidden = !isFullscreen;
+    self.labelTitle.hidden = !isFullscreen;
+}
+
 #pragma mark-点击了playerView
 BOOL _hideCover;
 -(void)playerViewTap:(UITapGestureRecognizer *)recognizer{
-    QLLog(@"点击了视频");
     //每次点击取消还在进程中的隐藏方法
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hide) object:nil];
     [UIView animateWithDuration:0.25 animations:^{
         if (!_hideCover) {
             self.coverView.alpha = 0;
+            if (self.delegate && [self.delegate respondsToSelector:@selector(qlplayer:isHiddenCoverView:)]) {
+                [self.delegate qlplayer:self isHiddenCoverView:YES];
+            }
         }else{
             self.coverView.alpha = 1;
+            if (self.delegate && [self.delegate respondsToSelector:@selector(qlplayer:isHiddenCoverView:)]) {
+                [self.delegate qlplayer:self isHiddenCoverView:NO];
+            }
         }
     } completion:^(BOOL finished) {
         if (!_hideCover) {
@@ -140,8 +186,16 @@ BOOL _hideCover;
 #pragma mark-隐藏cover
 
 -(void)hide{
+    if (!self.player.isPlaying) {
+        _hideCover = YES;
+        return;
+    }
+    
     [UIView animateWithDuration:0.25 animations:^{
         self.coverView.alpha =0;
+        if (self.delegate && [self.delegate respondsToSelector:@selector(qlplayer:isHiddenCoverView:)]) {
+            [self.delegate qlplayer:self isHiddenCoverView:YES];
+        }
     }completion:^(BOOL finished) {
         self.coverView.hidden = YES;
         _hideCover = YES;
@@ -161,38 +215,85 @@ CGPoint startP;
     }
 }
 
-
-
 #pragma mark ******** ObserversActions
 - (void)loadStateDidChange:(NSNotification *)noti {
     IJKMPMovieLoadState loadState = _player.loadState;
     if ((loadState & IJKMPMovieLoadStatePlaythroughOK) != 0) {//可以播放
-        if (!self.playOrPauseBtn.isSelected && !_player.isPlaying) {
-            [_player play];
-        }
-    }else if ((loadState & IJKMPMovieLoadStateStalled) != 0) {//网速不好
+        _errorLabel.hidden = YES;
+    } else if ((loadState & IJKMPMovieLoadStateStalled) != 0) {//网速不好
         [_loadingView startAnimating];
     } else {
-        NSLog(@"loadStateDidChange: ???: %d\n", (int)loadState);
+        QLLog(@"loadStateDidChange: ???: %d\n", (int)loadState);
     }
 
 }
+//播放结束
 - (void)moviePlayBackFinish:(NSNotification *)noti {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(qlplayerFinishedPlay:)]) {
+        [self.delegate qlplayerFinishedPlay:self];
+    }
+    
+    int reason =[[[noti userInfo] valueForKey:IJKMPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue];
+    switch (reason) {
+        case IJKMPMovieFinishReasonPlaybackEnded:
+            self.url = _url;
+            break;
+            
+        case IJKMPMovieFinishReasonUserExited:
+            QLLog(@"playbackStateDidChange: 用户退出播放: %d\n", reason);
+            break;
+            
+        case IJKMPMovieFinishReasonPlaybackError:
+            [_loadingView stopAnimating];
+            _errorLabel.hidden = NO;
+            _hasPrepareToPlay = NO;
+            break;
+            
+        default:
+            QLLog(@"playbackPlayBackDidFinish: ???: %d\n", reason);
+            break;
+    }
+}
+// 准备开始播放
+- (void)mediaIsPreparedToPlayDidChange:(NSNotification *)noti {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(qlplayerReadyToPlay:)]) {
+        [self.delegate qlplayerReadyToPlay:self];
+    }
+    _hasPrepareToPlay = YES;
+    _rightTimeLabel.text =[NSString stringWithFormat:@"%@",[self TimeformatFromSeconds:self.player.duration]];
     
 }
-- (void)mediaIsPreparedToPlayDidChange:(NSNotification *)noti {
-    _rightTimeLabel.text =[NSString stringWithFormat:@"%@",[self TimeformatFromSeconds:self.player.duration]];
-}
 
+// 播放状态改变
 - (void)moviePlayBackStateDidChange:(NSNotification *)noti {
     if (self.player.playbackState==IJKMPMoviePlaybackStatePlaying) {
         //视频开始播放的时候开启计时器
         [self releaseTimer];//由于这里会运行不止一次, 所以添加之前要释放原来的
         self.timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(updateVideoUI) userInfo:nil repeats:YES];
+        [[NSRunLoop currentRunLoop]addTimer:_timer forMode:NSDefaultRunLoopMode];
+        if (self.playOrPauseBtn.isSelected) {//在播放时需要把播放按钮置为播放状态
+            self.playOrPauseBtn.selected = NO;
+        }
         
         [self performSelector:@selector(hide) withObject:nil afterDelay:4];
         _coverImageView.hidden = YES;
+        
         [_loadingView stopAnimating];
+        
+    } else if(_player.playbackState == IJKMPMoviePlaybackStatePaused) {//暂停
+        QLLog(@"视频暂停播放");
+        
+    } else if(_player.playbackState == IJKMPMoviePlaybackStateStopped) {//停止
+        QLLog(@"视频停止播放");
+        
+    } else if(_player.playbackState == IJKMPMoviePlaybackStateInterrupted) {//打断
+        QLLog(@"视频被打断");
+        
+    } else if(_player.playbackState == IJKMPMoviePlaybackStateSeekingForward) {//快进
+        QLLog(@"视频快进");
+        
+    } else if(_player.playbackState == IJKMPMoviePlaybackStateSeekingBackward) {//快退
+        QLLog(@"视频快退");
         
     }
 }
@@ -233,7 +334,6 @@ CGPoint startP;
 }
 #pragma mark-初始化playerView
 - (void)setupPlayerView {
-    
     [self ql_releasePlayer];
     //MARK:ijkPlayer初始配置
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
@@ -252,11 +352,11 @@ CGPoint startP;
 #endif
     
     //MARK:创建播放器
-    NSURL *url = [NSURL URLWithString:self.url];
+    NSString *urlStr = self.url.length > 0 ? self.url : @"";
+    NSURL *url = [NSURL URLWithString:urlStr];
     self.player = [[IJKFFMoviePlayerController alloc]initWithContentURL:url withOptions:options];
     [self.player setScalingMode:IJKMPMovieScalingModeFill];
-    self.player.shouldAutoplay = NO;//放在前面才有效
-    [self.player prepareToPlay];
+    self.player.shouldAutoplay = YES;//放在前面才有效
     [self installMovieNotificationObservers];
     
     //获取播放视图
@@ -277,6 +377,18 @@ CGPoint startP;
     self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
     [self.playerView addSubview:self.loadingView];
     [self.loadingView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.center.equalTo(self.playerView);
+    }];
+    
+    self.errorLabel = [[UILabel alloc]init];
+    _errorLabel.textColor = [UIColor whiteColor];
+    _errorLabel.text = @"视频播放失败";
+    _errorLabel.hidden = YES;
+    _errorLabel.font = [UIFont systemFontOfSize:18];
+    _errorLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:.2];
+    [_errorLabel sizeToFit];
+    [self.playerView addSubview:_errorLabel];
+    [_errorLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.playerView);
     }];
     

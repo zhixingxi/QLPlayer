@@ -26,12 +26,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
-    self.player = [[QLPlayerView alloc]initWithFrame:CGRectMake(0, 64, QLSCREEN_W, 200) delegate:self url:@"http://cdn.shjujiao.com/video/10.201707141127.flv"];
+    self.player = [[QLPlayerView alloc]initWithFrame:CGRectMake(0, 64, QLSCREEN_W, 200) delegate:self url:@"tp://cdn.shjujiao.com/video/10.201707141127.flv"];
+    _player.isFullscreen = NO;
     [self.view addSubview:self.player];
     
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//        self.player.url = @"http://cdn.shjujiao.com/video/11.201707141128.flv";
-//    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.player.url = @"http://cdn.shjujiao.com/video/11.201707141128.flv";
+        [self.player startPlay];
+    });
 }
 
 - (void)didReceiveMemoryWarning {
