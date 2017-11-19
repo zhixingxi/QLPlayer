@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E4C684CA1F2CF1D6002A5DF4 /* IJKMediaFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4C684C91F2CF1D6002A5DF4 /* IJKMediaFramework.framework */; };
 		E4E7CFAB1F2ADF9C0008FE8C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7CFAA1F2ADF9C0008FE8C /* main.m */; };
 		E4E7CFAE1F2ADF9C0008FE8C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7CFAD1F2ADF9C0008FE8C /* AppDelegate.m */; };
 		E4E7CFB11F2ADF9C0008FE8C /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = E4E7CFB01F2ADF9C0008FE8C /* ViewController.mm */; };
@@ -26,7 +27,6 @@
 		E4E7CFD81F2AE0B30008FE8C /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4E7CFD71F2AE0B30008FE8C /* QuartzCore.framework */; };
 		E4E7CFDA1F2AE0B90008FE8C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4E7CFD91F2AE0B90008FE8C /* UIKit.framework */; };
 		E4E7CFDC1F2AE0C40008FE8C /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4E7CFDB1F2AE0C40008FE8C /* VideoToolbox.framework */; };
-		E4E7CFDE1F2AE19D0008FE8C /* IJKMediaFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4E7CFDD1F2AE19D0008FE8C /* IJKMediaFramework.framework */; };
 		E4E7D0151F2B0E7A0008FE8C /* QLPlayerView.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D0141F2B0E7A0008FE8C /* QLPlayerView.m */; };
 		E4E7D01B1F2B16760008FE8C /* PlayerSource.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E4E7D01A1F2B16760008FE8C /* PlayerSource.xcassets */; };
 		E4E7D0361F2B23950008FE8C /* MASCompositeConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = E4E7D01E1F2B23950008FE8C /* MASCompositeConstraint.m */; };
@@ -43,6 +43,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E4C684C91F2CF1D6002A5DF4 /* IJKMediaFramework.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = IJKMediaFramework.framework; sourceTree = "<group>"; };
 		E4E7CFA61F2ADF9C0008FE8C /* QLPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QLPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4E7CFAA1F2ADF9C0008FE8C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E4E7CFAC1F2ADF9C0008FE8C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -66,7 +67,6 @@
 		E4E7CFD71F2AE0B30008FE8C /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		E4E7CFD91F2AE0B90008FE8C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		E4E7CFDB1F2AE0C40008FE8C /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
-		E4E7CFDD1F2AE19D0008FE8C /* IJKMediaFramework.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = IJKMediaFramework.framework; sourceTree = "<group>"; };
 		E4E7D0131F2B0E7A0008FE8C /* QLPlayerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QLPlayerView.h; sourceTree = "<group>"; };
 		E4E7D0141F2B0E7A0008FE8C /* QLPlayerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QLPlayerView.m; sourceTree = "<group>"; };
 		E4E7D01A1F2B16760008FE8C /* PlayerSource.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PlayerSource.xcassets; sourceTree = "<group>"; };
@@ -117,7 +117,7 @@
 				E4E7CFC81F2AE06C0008FE8C /* CoreGraphics.framework in Frameworks */,
 				E4E7CFC61F2AE0650008FE8C /* AVFoundation.framework in Frameworks */,
 				E4E7CFC41F2AE05F0008FE8C /* AudioToolbox.framework in Frameworks */,
-				E4E7CFDE1F2AE19D0008FE8C /* IJKMediaFramework.framework in Frameworks */,
+				E4C684CA1F2CF1D6002A5DF4 /* IJKMediaFramework.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,7 +171,7 @@
 		E4E7CFC21F2AE05F0008FE8C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E4E7CFDD1F2AE19D0008FE8C /* IJKMediaFramework.framework */,
+				E4C684C91F2CF1D6002A5DF4 /* IJKMediaFramework.framework */,
 				E4E7CFDB1F2AE0C40008FE8C /* VideoToolbox.framework */,
 				E4E7CFD91F2AE0B90008FE8C /* UIKit.framework */,
 				E4E7CFD71F2AE0B30008FE8C /* QuartzCore.framework */,

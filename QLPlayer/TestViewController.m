@@ -26,7 +26,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
-    self.player = [[QLPlayerView alloc]initWithFrame:CGRectMake(0, 64, QLSCREEN_W, 200) delegate:self url:@"tp://cdn.shjujiao.com/video/10.201707141127.flv"];
+    self.player = [[QLPlayerView alloc]initWithFrame:CGRectMake(0, 64, QLSCREEN_W, 200) delegate:self url:@"http://cdn.shjujiao.com/video/10.201707141127.flv"];
     _player.isFullscreen = NO;
     [self.view addSubview:self.player];
     

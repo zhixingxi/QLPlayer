@@ -262,6 +262,7 @@ CGPoint startP;
     _hasPrepareToPlay = YES;
     _rightTimeLabel.text =[NSString stringWithFormat:@"%@",[self TimeformatFromSeconds:self.player.duration]];
     
+    
 }
 
 // 播放状态改变
